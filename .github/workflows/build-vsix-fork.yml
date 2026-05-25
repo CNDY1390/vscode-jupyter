@@ -1,0 +1,54 @@
+name: Build VSIX in fork
+
+on:
+  push:
+    branches:
+      - 'build-vsix-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TARGET_SHA: f162554f2e75b53a51db53397d2fddac05268dbc
+  NODE_VERSION: 22.15.1
+  NPM_VERSION: 10.9.2
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  build-vsix:
+    name: Build VSIX
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact target commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          persist-credentials: false
+
+      - name: Use Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Use npm
+        run: npm i -g npm@${{ env.NPM_VERSION }}
+
+      - name: Use Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install vsce
+        run: npm i -g @vscode/vsce
+
+      - name: Build VSIX
+        uses: ./.github/actions/build-vsix
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v5
+        with:
+          name: ms-toolsai-jupyter-insiders-f162554
+          path: ms-toolsai-jupyter-insiders.vsix
+          retention-days: 7
